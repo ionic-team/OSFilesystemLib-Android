@@ -12,6 +12,6 @@ package io.ionic.libs.ionfilesystemlib.model
  */
 data class IONFILEReadOptions(
     val encoding: IONFILEEncoding,
-    val offset: Int = 0,
+    val offset: Long = 0L,
     val length: Int = IONFILEConstants.LENGTH_READ_TIL_EOF
 )

@@ -20,6 +20,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.io.RandomAccessFile
 import java.util.Base64
 
 class IONFILELocalFilesHelperTest : IONFILEBaseJUnitTest() {
@@ -693,7 +694,7 @@ class IONFILELocalFilesHelperTest : IONFILEBaseJUnitTest() {
             fullPath = path,
             options = IONFILEReadOptions(
                 encoding = IONFILEEncoding.WithCharset(Charsets.UTF_8),
-                offset = content.length
+                offset = content.length.toLong()
             )
         )
 
@@ -719,7 +720,7 @@ class IONFILELocalFilesHelperTest : IONFILEBaseJUnitTest() {
             fullPath = path,
             options = IONFILEReadInChunksOptions(
                 encoding = IONFILEEncoding.WithCharset(Charsets.UTF_8),
-                offset = content.length + 100,
+                offset = (content.length + 100).toLong(),
                 chunkSize = 10
             )
         ).test {
@@ -727,6 +728,36 @@ class IONFILELocalFilesHelperTest : IONFILEBaseJUnitTest() {
             awaitComplete()
         }
     }
+    @Test
+    fun `given file larger than 2GB, when readFileInChunks is called with offset beyond Int MAX_VALUE, the correct content is returned`() =
+        runTest {
+            val path = fileInRootDir.absolutePath
+            val contentAfterBoundary = "content_after_2gb_boundary"
+            // offset is one byte past Int.MAX_VALUE (2,147,483,648 bytes)
+            val offset = Int.MAX_VALUE.toLong() + 1
+            // create a sparse file by seeking past the 2GB boundary and writing content there;
+            // the OS will not allocate actual disk space for the empty region
+            RandomAccessFile(path, "rw").use { raf ->
+                raf.seek(offset)
+                raf.writeBytes(contentAfterBoundary)
+            }
+
+            var result = ""
+            sut.readFileInChunks(
+                fullPath = path,
+                options = IONFILEReadInChunksOptions(
+                    encoding = IONFILEEncoding.WithCharset(Charsets.UTF_8),
+                    offset = offset,
+                    chunkSize = Int.MAX_VALUE
+                )
+            ).test {
+                result += awaitItem()
+                awaitComplete()
+            }
+
+            assertEquals(contentAfterBoundary, result)
+        }
+
     // endregion read with offset/length tests
 
     // region fileMetadata tests

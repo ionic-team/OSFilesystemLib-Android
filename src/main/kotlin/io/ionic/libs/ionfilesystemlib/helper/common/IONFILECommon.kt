@@ -138,7 +138,7 @@ internal inline fun prepareForCopyOrRename(
  * @param offset the number of bytes to skip before reading; must be >= 0
  * @param length the maximum number of bytes to read; must be > 0
  */
-internal fun validateOffsetAndLength(offset: Int, length: Int) {
+internal fun validateOffsetAndLength(offset: Long, length: Int) {
     require(offset >= 0) { "offset must be >= 0, but was $offset" }
     require(length > 0) { "length must be > 0, but was $length" }
 }

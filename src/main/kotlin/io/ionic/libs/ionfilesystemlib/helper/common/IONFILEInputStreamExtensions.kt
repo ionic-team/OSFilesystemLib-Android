@@ -140,8 +140,9 @@ private fun processReadChunk(
 private fun InputStream.calculateChunkSizeToUse(
     options: IONFILEReadInChunksOptions,
     bufferSize: Int,
-): Int = minOf(options.chunkSize, minOf(available() - options.offset, options.length))
-    .coerceAtLeast(bufferSize)
+): Int = minOf(options.chunkSize.toLong(), minOf(available().toLong() - options.offset, options.length.toLong()))
+    .coerceAtLeast(bufferSize.toLong())
+    .toInt()
     .let {
         options.encoding.convertChunkSize(it)
     }
@@ -155,15 +156,15 @@ private fun IONFILEEncoding.convertChunkSize(chunkSize: Int) = if (this == IONFI
 }
 
 @SuppressLint("NewApi")
-private fun InputStream.applyOffset(offset: Int) {
+private fun InputStream.applyOffset(offset: Long) {
     if (offset <= 0) return
 
     if (IONFILEBuildConfig.getAndroidSdkVersionCode() >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        this.skipNBytes(offset.toLong())
+        this.skipNBytes(offset)
         return
     }
 
-    var remaining = offset.toLong()
+    var remaining = offset
     while (remaining > 0) {
         val skipped = this.skip(remaining)
         if (skipped > 0) {

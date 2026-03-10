@@ -23,6 +23,6 @@ package io.ionic.libs.ionfilesystemlib.model
 data class IONFILEReadInChunksOptions(
     val encoding: IONFILEEncoding,
     val chunkSize: Int,
-    val offset: Int = 0,
+    val offset: Long = 0L,
     val length: Int = IONFILEConstants.LENGTH_READ_TIL_EOF
 )
